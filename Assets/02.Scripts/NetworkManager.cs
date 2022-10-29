@@ -58,7 +58,11 @@ public class NetworkManager : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        Debug.Log("end");
+        if (!GameManager.Instance.serverConnected)
+        {
+            return;
+        }
+
         QuitGame();
     }
 }
