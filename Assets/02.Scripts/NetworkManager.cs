@@ -43,23 +43,22 @@ public class NetworkManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            TestFunc();
+            QuitGame();
         }
     }
 
-    void TestFunc()
+    void QuitGame()
     {
         Debug.Log("disconnect");
         C_LeaveGame leavePacket = new C_LeaveGame();
         _session.Send(leavePacket.Write());
         _session.Disconnect();
+        PlayerManager.Instance.LeaveGame();
     }
 
     void OnApplicationQuit()
     {
         Debug.Log("end");
-        //C_LeaveGame packet = new C_LeaveGame();
-        //_session.Send(packet.Write());
-        
+        QuitGame();
     }
 }

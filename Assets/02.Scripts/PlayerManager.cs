@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PlayerManager : MonoBehaviour
@@ -18,37 +19,28 @@ public class PlayerManager : MonoBehaviour
 
     void Update()
     {
+        if (!GameManager.Instance.serverConnected)
+        {
+            return;
+        }
+
         foreach (Player p in _players.Values)
         {
-            //p.transform.pos
             if (p.Destination == null)
                 return;
 
             p.transform.position = Vector3.Lerp(p.transform.position, p.Destination, 0.005f);
-            //p.transform.position = p.Destination;
         }  
     }
 
     public void Add(S_PlayerList packet)
     {
-        //Object obj = Resources.Load("../03.Prefabs/Player");
-
         foreach (S_PlayerList.Player p in packet.players)
         {
             if (p.isSelf)
             {
-                //Object myObj = Resources.Load("MyPlayer");
-
-                //GameObject go = Object.Instantiate(myObj) as GameObject;
-                //MyPlayer myPlayer = go.AddComponent<MyPlayer>();
-                //myPlayer.PlayerId = p.playerId;
-                //myPlayer.transform.position = new Vector3(p.posX, p.posY, p.posZ);
-                //_myPlayer = myPlayer;
-
-                GameObject myObj = GameObject.Find("Player");
+                GameObject myObj = Object.Instantiate(playerPrefab) as GameObject;
                 MyPlayer myPlayer = myObj.AddComponent<MyPlayer>();
-
-                myPlayer = GameObject.Find("Player").GetComponent<MyPlayer>();
                 myPlayer.PlayerId = p.playerId;
                 myPlayer.transform.position = new Vector3(p.posX, p.posY, p.posZ);
                 _myPlayer = myPlayer;
@@ -68,8 +60,6 @@ public class PlayerManager : MonoBehaviour
     {
         if (_myPlayer.PlayerId == packet.playerId)
         {
-            // 1. �������� ok��Ŷ�� ���� �̵���Ű�� ���(�ϴ� 1������)
-            // 2. �ϴ� �̵���Ű�� ���� ������ ���� ������Ű�� ���
             _myPlayer.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
         }
         else
@@ -77,9 +67,15 @@ public class PlayerManager : MonoBehaviour
             Player player = null;
             if (_players.TryGetValue(packet.playerId, out player))
             {
-                player.Destination = new Vector3(player.transform.position.x + packet.posX, packet.posY, player.transform.position.z + packet.posZ);
+                player.Destination = new Vector3(packet.posX, packet.posY, packet.posZ);
             }
         }
+    }
+
+    public int GetPlayersCount()
+    {
+        // 자신까지 더해서 전달
+        return _players.Count + 1;
     }
 
     public void EnterGame(S_BroadcastEnterGame packet)
@@ -89,12 +85,24 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        Object obj = Resources.Load("Player");
-        GameObject go = Object.Instantiate(obj) as GameObject;
+        GameObject go = Object.Instantiate(playerPrefab) as GameObject;
 
         Player player = go.AddComponent<Player>();
         player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
         _players.Add(packet.playerId, player);
+    }
+
+    public void LeaveGame()
+    {
+        GameObject.Destroy(_myPlayer.gameObject);
+        _myPlayer = null;
+
+        // 마이플레이어가 게임을 떠나면 다른 플레이어들도 삭제
+        for (int i = 0; i < _players.Count; i++)
+        {
+            GameObject.Destroy(_players.ElementAt(i).Value.gameObject);
+            _players.Remove(i);
+        }
     }
 
     public void LeaveGame(S_BroadcastLeaveGame packet)
@@ -103,6 +111,13 @@ public class PlayerManager : MonoBehaviour
         {
             GameObject.Destroy(_myPlayer.gameObject);
             _myPlayer = null;
+            
+            // 마이플레이어가 게임을 떠나면 다른 플레이어들도 삭제
+            for (int i = 0; i < _players.Count; i++)
+            {
+                GameObject.Destroy(_players[i].gameObject);
+                _players.Remove(i);
+            }
         }
         else
         {

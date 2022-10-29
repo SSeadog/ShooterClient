@@ -134,6 +134,7 @@ namespace ServerCore
             _socket.Shutdown(SocketShutdown.Both);
             _socket.Close();
             Clear();
+            GameManager.Instance.serverConnected = false;
         }
 
         #region 네트워크 통신
