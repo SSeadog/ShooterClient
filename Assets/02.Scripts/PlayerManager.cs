@@ -29,7 +29,7 @@ public class PlayerManager : MonoBehaviour
             if (p.Destination == null)
                 return;
 
-            p.transform.position = p.Destination;
+            p.transform.position = Vector3.Lerp(p.transform.position, p.Destination, Time.deltaTime * 10.0f);
         }  
     }
 
