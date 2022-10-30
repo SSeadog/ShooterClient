@@ -26,9 +26,9 @@ public class MyPlayer : Player
             yield return new WaitForSeconds(0.25f);
 
             C_Move movePacket = new C_Move();
-            movePacket.posX = UnityEngine.Random.Range(-50, 50);
+            movePacket.posX = transform.position.x;
             movePacket.posY = transform.position.y;
-            movePacket.posZ = UnityEngine.Random.Range(-50, 50);
+            movePacket.posZ = transform.position.z;
             _network.Send(movePacket.Write());
         }
     }

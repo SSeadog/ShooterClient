@@ -40,10 +40,14 @@ public class PlayerManager : MonoBehaviour
             if (p.isSelf)
             {
                 GameObject myObj = Object.Instantiate(playerPrefab) as GameObject;
+                myObj.AddComponent<MoveCtrl>();
                 MyPlayer myPlayer = myObj.AddComponent<MyPlayer>();
                 myPlayer.PlayerId = p.playerId;
                 myPlayer.transform.position = new Vector3(p.posX, p.posY, p.posZ);
                 _myPlayer = myPlayer;
+
+                // 카메라에게 타겟 설정해주기
+                GameObject.Find("Main Camera").GetComponent<CameraCtrl>().target = myObj;
             }
             else
             {
