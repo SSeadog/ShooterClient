@@ -32,8 +32,20 @@ public class PacketManager
         _makeFunc.Add((ushort)PacketID.S_BroadcastMove, MakePacket<S_BroadcastMove>);
         _handler.Add((ushort)PacketID.S_BroadcastMove, PacketHandler.S_BroadcastMoveHandler);
 
+        _makeFunc.Add((ushort)PacketID.S_BroadcastFire, MakePacket<S_BroadcastFire>);
+        _handler.Add((ushort)PacketID.S_BroadcastFire, PacketHandler.S_BroadcastFireHandler);
+
+        _makeFunc.Add((ushort)PacketID.S_BroadcastAnimate, MakePacket<S_BroadcastAnimate>);
+        _handler.Add((ushort)PacketID.S_BroadcastAnimate, PacketHandler.S_BroadcastAnimateHandler);
+
+        _makeFunc.Add((ushort)PacketID.S_BroadcastAttacked, MakePacket<S_BroadcastAttacked>);
+        _handler.Add((ushort)PacketID.S_BroadcastAttacked, PacketHandler.S_BroadcastAttackedHandler);
+
+        _makeFunc.Add((ushort)PacketID.S_TestReturn, MakePacket<S_TestReturn>);
+        _handler.Add((ushort)PacketID.S_TestReturn, PacketHandler.S_TestReturnHandler);
+
     }
-        
+
     public void OnRecvPacket(PacketSession session, ArraySegment<byte> buffer, Action<PacketSession, IPacket> onRecvCallback = null)
     {
         ushort count = 0;

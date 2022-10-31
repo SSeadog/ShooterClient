@@ -2,19 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Player;
+using static S_PlayerList;
 
 public class PlayerManager : MonoBehaviour
 {
     public GameObject playerPrefab;
 
     MyPlayer _myPlayer;
+    CharacterController _myPlayerController;
     Dictionary<int, Player> _players = new Dictionary<int, Player>();
 
     public static PlayerManager Instance;
+    GameObject bulletPrefab;
 
     void Start()
     {
         Instance = gameObject.GetComponent<PlayerManager>();
+
+        bulletPrefab = (GameObject)Resources.Load("Bullet");
     }
 
     void Update()
@@ -29,7 +35,8 @@ public class PlayerManager : MonoBehaviour
             if (p.Destination == null)
                 return;
 
-            p.transform.position = Vector3.Lerp(p.transform.position, p.Destination, Time.deltaTime * 10.0f);
+            p.transform.position = Vector3.Lerp(p.transform.position, p.Destination, Time.deltaTime * 5.0f);
+            p.transform.rotation = Quaternion.Slerp(p.transform.rotation, p.RotationDestination, Time.deltaTime * 5.0f);
         }  
     }
 
@@ -40,11 +47,14 @@ public class PlayerManager : MonoBehaviour
             if (p.isSelf)
             {
                 GameObject myObj = Object.Instantiate(playerPrefab) as GameObject;
-                myObj.AddComponent<MoveCtrl>();
+                //myObj.AddComponent<MoveCtrl>();
                 MyPlayer myPlayer = myObj.AddComponent<MyPlayer>();
                 myPlayer.PlayerId = p.playerId;
+                myPlayer.Hp = p.hp;
                 myPlayer.transform.position = new Vector3(p.posX, p.posY, p.posZ);
                 _myPlayer = myPlayer;
+
+                _myPlayerController = _myPlayer.GetComponent<CharacterController>();
 
                 // 카메라에게 타겟 설정해주기
                 GameObject.Find("Main Camera").GetComponent<CameraCtrl>().target = myObj;
@@ -54,6 +64,7 @@ public class PlayerManager : MonoBehaviour
                 GameObject go = Object.Instantiate(playerPrefab) as GameObject;
                 Player player = go.AddComponent<Player>();
                 player.PlayerId = p.playerId;
+                player.Hp = p.hp;
                 player.transform.position = new Vector3(p.posX, p.posY, p.posZ);
                 _players.Add(p.playerId, player);
             }
@@ -64,7 +75,8 @@ public class PlayerManager : MonoBehaviour
     {
         if (_myPlayer.PlayerId == packet.playerId)
         {
-            _myPlayer.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
+            //_myPlayer.Destination = new Vector3(packet.posX, packet.posY, packet.posZ);
+            //_myPlayer.RotationDestination = Quaternion.Euler(packet.rotX, packet.rotY, packet.rotZ);
         }
         else
         {
@@ -72,6 +84,62 @@ public class PlayerManager : MonoBehaviour
             if (_players.TryGetValue(packet.playerId, out player))
             {
                 player.Destination = new Vector3(packet.posX, packet.posY, packet.posZ);
+                Vector3 playerRot = player.transform.eulerAngles;
+                player.RotationDestination = Quaternion.Euler(playerRot.x, packet.rotY, playerRot.z);
+            }
+        }
+    }
+
+    public void Fire(S_BroadcastFire packet)
+    {
+        if (_myPlayer.PlayerId == packet.playerId)
+        {
+            Vector3 firePos = new Vector3(packet.posX, packet.posY, packet.posZ);
+            Quaternion fireRot = Quaternion.Euler(0, packet.rotY, 0);
+
+            GameObject.Instantiate(bulletPrefab, firePos, fireRot);
+        }
+        else
+        {
+            Player player = null;
+            if (_players.TryGetValue(packet.playerId, out player))
+            {
+                Vector3 firePos = new Vector3(packet.posX, packet.posY, packet.posZ);
+                Quaternion fireRot = Quaternion.Euler(0, packet.rotY, 0);
+
+                GameObject.Instantiate(bulletPrefab, firePos, fireRot);
+            }
+        }
+    }
+
+    public void Animate(S_BroadcastAnimate packet)
+    {
+        if (_myPlayer.PlayerId == packet.playerId)
+        {
+            
+        }
+        else
+        {
+            Player player = null;
+            if (_players.TryGetValue(packet.playerId, out player))
+            {
+                player.animState = (Player.AnimState)packet.animIndex;
+            }
+        }
+    }
+
+    public void Attacked(S_BroadcastAttacked packet)
+    {
+        if (_myPlayer.PlayerId == packet.playerId)
+        {
+            _myPlayer.Hp = packet.hp;
+        }
+        else
+        {
+            Player player = null;
+            if (_players.TryGetValue(packet.playerId, out player))
+            {
+                player.Hp = packet.hp;
             }
         }
     }
@@ -92,6 +160,9 @@ public class PlayerManager : MonoBehaviour
         GameObject go = Object.Instantiate(playerPrefab) as GameObject;
 
         Player player = go.AddComponent<Player>();
+        player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
+        player.PlayerId = packet.playerId;
+        player.Hp = packet.hp;
         player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
         _players.Add(packet.playerId, player);
     }

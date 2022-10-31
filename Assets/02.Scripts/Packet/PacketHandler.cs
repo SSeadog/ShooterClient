@@ -1,5 +1,6 @@
 ﻿using DummyClient;
 using ServerCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,5 +40,37 @@ class PacketHandler
         ServerSession serverSession = session as ServerSession;
 
         PlayerManager.Instance.Move(pkt);
+    }
+
+    public static void S_BroadcastFireHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastFire pkt = packet as S_BroadcastFire;
+        ServerSession serverSession = session as ServerSession;
+
+        PlayerManager.Instance.Fire(pkt);
+    }
+
+    public static void S_BroadcastAnimateHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastAnimate pkt = packet as S_BroadcastAnimate;
+        ServerSession serverSession = session as ServerSession;
+
+        PlayerManager.Instance.Animate(pkt);
+    }
+
+    public static void S_BroadcastAttackedHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastAttacked pkt = packet as S_BroadcastAttacked;
+        ServerSession serverSession = session as ServerSession;
+
+        PlayerManager.Instance.Attacked(pkt);
+    }
+
+    public static void S_TestReturnHandler(PacketSession session, IPacket packet)
+    {
+        S_TestReturn pkt = packet as S_TestReturn;
+        ServerSession serverSession = session as ServerSession;
+
+        Debug.Log($"SendTime: {pkt.startS} {pkt.startMS} ReceiveTime: {DateTime.Now.Second} {DateTime.Now.Millisecond}");
     }
 }

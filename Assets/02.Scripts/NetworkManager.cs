@@ -45,6 +45,11 @@ public class NetworkManager : MonoBehaviour
         {
             QuitGame();
         }
+
+        C_Test testPacket = new C_Test();
+        testPacket.startS = DateTime.Now.Second.ToString();
+        testPacket.startMS = DateTime.Now.Millisecond.ToString();
+        Send(testPacket.Write());
     }
 
     void QuitGame()
