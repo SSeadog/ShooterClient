@@ -8,7 +8,7 @@ public class BulletFire : MonoBehaviour
 
     void Start()
     {
-        GetComponent<Rigidbody>().velocity = transform.forward * 10.0f;
+        GetComponent<Rigidbody>().velocity = transform.forward * 100.0f;
         Destroy(gameObject, lifeTime);
     }
 }

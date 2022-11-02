@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MyPlayer : Player
 {
@@ -21,6 +22,15 @@ public class MyPlayer : Player
 
         firePos = transform.Find("firePos");
         bulletPrefab = (GameObject)Resources.Load("Bullet");
+
+        RectTransform[] rects = transform.GetComponentsInChildren<RectTransform>();
+        foreach (RectTransform rect in rects)
+        {
+            if (rect.name == "Hp")
+            {
+                Hpbar = rect;
+            }
+        }
 
         controller = gameObject.GetComponent<CharacterController>();
 
@@ -42,6 +52,9 @@ public class MyPlayer : Player
 
     void Update()
     {
+        if (isDie)
+            return;
+
         if (Input.GetMouseButtonDown(0))
         {
             Fire();
@@ -85,13 +98,21 @@ public class MyPlayer : Player
     {
         while (true)
         {
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.25f);
+
+            if (isDie)
+                continue;
 
             C_Move movePacket = new C_Move();
             movePacket.posX = transform.position.x;
             movePacket.posY = transform.position.y;
             movePacket.posZ = transform.position.z;
-            
+
+            Vector3 velocity = controller.velocity;
+            movePacket.velX = velocity.x;
+            movePacket.velY = velocity.y;
+            movePacket.velZ = velocity.z;
+
             Vector3 rot = transform.rotation.eulerAngles;
             movePacket.rotY = rot.y;
 
@@ -101,6 +122,19 @@ public class MyPlayer : Player
             animPacket.animIndex = (int)animState;
 
             _network.Send(animPacket.Write());
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.tag == "Bullet")
+        {
+            Destroy(other.gameObject);
+
+            C_Attacked attackedPacket = new C_Attacked();
+            attackedPacket.playerId = PlayerId;
+            attackedPacket.damage = 20;
+            _network.Send(attackedPacket.Write());
         }
     }
 }

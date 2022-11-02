@@ -46,10 +46,12 @@ public class NetworkManager : MonoBehaviour
             QuitGame();
         }
 
-        C_Test testPacket = new C_Test();
-        testPacket.startS = DateTime.Now.Second.ToString();
-        testPacket.startMS = DateTime.Now.Millisecond.ToString();
-        Send(testPacket.Write());
+        //C_Test testPacket = new C_Test();
+        //testPacket.startS = DateTime.Now.Second.ToString();
+        //testPacket.startMS = DateTime.Now.Millisecond.ToString();
+        //Send(testPacket.Write());
+
+        //Debug.Log($"Start {DateTime.Now.Second.ToString("D2")} {DateTime.Now.Millisecond.ToString()}");
     }
 
     void QuitGame()

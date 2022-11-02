@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +33,9 @@ public class PlayerManager : MonoBehaviour
 
         foreach (Player p in _players.Values)
         {
+            if (p.isDie)
+                return;
+
             if (p.Destination == null)
                 return;
 
@@ -46,11 +50,11 @@ public class PlayerManager : MonoBehaviour
         {
             if (p.isSelf)
             {
-                GameObject myObj = Object.Instantiate(playerPrefab) as GameObject;
-                //myObj.AddComponent<MoveCtrl>();
+                GameObject myObj = GameObject.Instantiate(playerPrefab);
                 MyPlayer myPlayer = myObj.AddComponent<MyPlayer>();
                 myPlayer.PlayerId = p.playerId;
                 myPlayer.Hp = p.hp;
+                //myPlayer.Hpbar.localScale = new Vector2(p.hp / 100f, 1f);
                 myPlayer.transform.position = new Vector3(p.posX, p.posY, p.posZ);
                 _myPlayer = myPlayer;
 
@@ -61,10 +65,11 @@ public class PlayerManager : MonoBehaviour
             }
             else
             {
-                GameObject go = Object.Instantiate(playerPrefab) as GameObject;
+                GameObject go = GameObject.Instantiate(playerPrefab);
                 Player player = go.AddComponent<Player>();
                 player.PlayerId = p.playerId;
                 player.Hp = p.hp;
+                //player.Hpbar.localScale = new Vector2(p.hp / 100f, 1f);
                 player.transform.position = new Vector3(p.posX, p.posY, p.posZ);
                 _players.Add(p.playerId, player);
             }
@@ -83,7 +88,10 @@ public class PlayerManager : MonoBehaviour
             Player player = null;
             if (_players.TryGetValue(packet.playerId, out player))
             {
-                player.Destination = new Vector3(packet.posX, packet.posY, packet.posZ);
+                if (player.isDie)
+                    return;
+
+                player.Destination = new Vector3(packet.posX, packet.posY, packet.posZ) + new Vector3((float)(packet.velX * 0.1), (float)(packet.velY * 0.1), (float)(packet.velZ * 0.1));
                 Vector3 playerRot = player.transform.eulerAngles;
                 player.RotationDestination = Quaternion.Euler(playerRot.x, packet.rotY, playerRot.z);
             }
@@ -92,10 +100,16 @@ public class PlayerManager : MonoBehaviour
 
     public void Fire(S_BroadcastFire packet)
     {
+        DateTime now = DateTime.Now;
+        string fireRecvTime = now.Second.ToString("D2") + now.Millisecond.ToString();
+        int latency = Int32.Parse(fireRecvTime) - Int32.Parse(packet.startTime);
         if (_myPlayer.PlayerId == packet.playerId)
         {
-            Vector3 firePos = new Vector3(packet.posX, packet.posY, packet.posZ);
+            if (_myPlayer.isDie)
+                return;
+
             Quaternion fireRot = Quaternion.Euler(0, packet.rotY, 0);
+            Vector3 firePos = new Vector3(packet.posX, packet.posY, packet.posZ) + (fireRot * Vector3.forward * 10f * latency * 0.001f);
 
             GameObject.Instantiate(bulletPrefab, firePos, fireRot);
         }
@@ -104,6 +118,9 @@ public class PlayerManager : MonoBehaviour
             Player player = null;
             if (_players.TryGetValue(packet.playerId, out player))
             {
+                if (player.isDie)
+                    return;
+
                 Vector3 firePos = new Vector3(packet.posX, packet.posY, packet.posZ);
                 Quaternion fireRot = Quaternion.Euler(0, packet.rotY, 0);
 
@@ -133,6 +150,8 @@ public class PlayerManager : MonoBehaviour
         if (_myPlayer.PlayerId == packet.playerId)
         {
             _myPlayer.Hp = packet.hp;
+            _myPlayer.Hpbar.localScale = new Vector2(packet.hp / 100f, 1f);
+
         }
         else
         {
@@ -140,6 +159,63 @@ public class PlayerManager : MonoBehaviour
             if (_players.TryGetValue(packet.playerId, out player))
             {
                 player.Hp = packet.hp;
+                player.Hpbar.localScale = new Vector2(packet.hp / 100f, 1f);
+            }
+        }
+    }
+
+    public void Die(S_BroadcastDie packet)
+    {
+        if (_myPlayer.PlayerId == packet.playerId)
+        {
+            _myPlayer.isDie = true;
+            _myPlayer.Hpbar.localScale = new Vector2(0, 0);
+            _myPlayer.GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
+            _myPlayer.GetComponentInChildren<MeshRenderer>().enabled = false;
+            _myPlayer.GetComponent<CharacterController>().enabled = false;
+            _myPlayer.GetComponent<CapsuleCollider>().enabled = false;
+        }
+        else
+        {
+            Player player = null;
+            if (_players.TryGetValue(packet.playerId, out player))
+            {
+                player.isDie = true;
+                player.Hpbar.localScale = new Vector2(0, 0);
+                player.GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
+                player.GetComponentInChildren<MeshRenderer>().enabled = false;
+            }
+        }
+    }
+
+    public void Respawn(S_BroadcastRespawn packet)
+    {
+        if (_myPlayer.PlayerId == packet.playerId)
+        {
+            _myPlayer.Hp = packet.hp;
+            _myPlayer.Hpbar.localScale = new Vector2(packet.hp / 100f, 1f);
+            Vector3 spawnPoint = new Vector3(packet.posX, packet.posY, packet.posZ);
+            _myPlayer.transform.position = spawnPoint;
+            _myPlayer.Destination = spawnPoint;
+            _myPlayer.GetComponentInChildren<SkinnedMeshRenderer>().enabled = true;
+            _myPlayer.GetComponentInChildren<MeshRenderer>().enabled = true;
+            _myPlayer.GetComponent<CharacterController>().enabled = true;
+            _myPlayer.GetComponent<CapsuleCollider>().enabled = true;
+            _myPlayer.isDie = false;
+        }
+        else
+        {
+            Player player = null;
+            if (_players.TryGetValue(packet.playerId, out player))
+            {
+                player.Hp = packet.hp;
+                player.Hpbar.localScale = new Vector2(packet.hp / 100f, 1f);
+                Vector3 spawnPoint = new Vector3(packet.posX, packet.posY, packet.posZ);
+                player.transform.position = spawnPoint;
+                player.Destination = spawnPoint;
+                player.GetComponentInChildren<SkinnedMeshRenderer>().enabled = true;
+                player.GetComponentInChildren<MeshRenderer>().enabled = true;
+                player.isDie = false;
             }
         }
     }
@@ -157,13 +233,12 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        GameObject go = Object.Instantiate(playerPrefab) as GameObject;
+        GameObject go = GameObject.Instantiate(playerPrefab);
 
         Player player = go.AddComponent<Player>();
         player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
         player.PlayerId = packet.playerId;
         player.Hp = packet.hp;
-        player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
         _players.Add(packet.playerId, player);
     }
 

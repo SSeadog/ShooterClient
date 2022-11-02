@@ -66,6 +66,22 @@ class PacketHandler
         PlayerManager.Instance.Attacked(pkt);
     }
 
+    public static void S_BroadcastDieHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastDie pkt = packet as S_BroadcastDie;
+        ServerSession serverSession = session as ServerSession;
+
+        PlayerManager.Instance.Die(pkt);
+    }
+    
+    public static void S_BroadcastRespawnHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastRespawn pkt = packet as S_BroadcastRespawn;
+        ServerSession serverSession = session as ServerSession;
+
+        PlayerManager.Instance.Respawn(pkt);
+    }
+
     public static void S_TestReturnHandler(PacketSession session, IPacket packet)
     {
         S_TestReturn pkt = packet as S_TestReturn;

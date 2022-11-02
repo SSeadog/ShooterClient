@@ -1,11 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
     protected NetworkManager _network;
 
+    public bool isDie;
     public int PlayerId { get; set; }
     public int Hp;
     public Vector3 Destination; // 서버에서 받은 좌표
@@ -13,6 +16,8 @@ public class Player : MonoBehaviour
 
     protected Transform firePos;
     protected GameObject bulletPrefab;
+
+    public RectTransform Hpbar;
 
     public enum AnimState
     {
@@ -33,8 +38,19 @@ public class Player : MonoBehaviour
     {
         _network = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
 
+        isDie = false;
+
         firePos = transform.Find("firePos");
         bulletPrefab = (GameObject)Resources.Load("Bullet");
+
+        RectTransform[] rects = transform.GetComponentsInChildren<RectTransform>();
+        foreach (RectTransform rect in rects)
+        {
+            if (rect.name == "Hp")
+            {
+                Hpbar = rect;
+            }
+        }
 
         controller = gameObject.GetComponent<CharacterController>();
         anim = GetComponentInChildren<Animation>();
@@ -66,6 +82,11 @@ public class Player : MonoBehaviour
         firePacket.posY = firePos.position.y;
         firePacket.posZ = firePos.position.z;
         firePacket.rotY = firePos.rotation.eulerAngles.y;
+
+        DateTime now = DateTime.Now;
+        string fireTime = now.Second.ToString("D2") + now.Millisecond.ToString();
+        firePacket.startTime = fireTime;
+
         _network.Send(firePacket.Write());
     }
 
@@ -75,16 +96,16 @@ public class Player : MonoBehaviour
         
     }
 
+    public void Respawn()
+    {
+
+    }
+
     void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.tag == "Bullet")
         {
             Destroy(other.gameObject);
-
-            C_Attacked attackedPacket = new C_Attacked();
-            attackedPacket.playerId = PlayerId;
-            attackedPacket.damage = 20;
-            _network.Send(attackedPacket.Write());
         }
     }
 }

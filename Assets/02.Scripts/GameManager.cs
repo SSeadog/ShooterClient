@@ -12,7 +12,11 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        Instance = gameObject.GetComponent<GameManager>(); ;
+        Instance = gameObject.GetComponent<GameManager>();
+
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     // Update is called once per frame

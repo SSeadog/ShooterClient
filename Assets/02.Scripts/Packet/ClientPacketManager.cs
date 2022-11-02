@@ -41,6 +41,12 @@ public class PacketManager
         _makeFunc.Add((ushort)PacketID.S_BroadcastAttacked, MakePacket<S_BroadcastAttacked>);
         _handler.Add((ushort)PacketID.S_BroadcastAttacked, PacketHandler.S_BroadcastAttackedHandler);
 
+        _makeFunc.Add((ushort)PacketID.S_BroadcastDie, MakePacket<S_BroadcastDie>);
+        _handler.Add((ushort)PacketID.S_BroadcastDie, PacketHandler.S_BroadcastDieHandler);
+
+        _makeFunc.Add((ushort)PacketID.S_BroadcastRespawn, MakePacket<S_BroadcastRespawn>);
+        _handler.Add((ushort)PacketID.S_BroadcastRespawn, PacketHandler.S_BroadcastRespawnHandler);
+
         _makeFunc.Add((ushort)PacketID.S_TestReturn, MakePacket<S_TestReturn>);
         _handler.Add((ushort)PacketID.S_TestReturn, PacketHandler.S_TestReturnHandler);
 
